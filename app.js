@@ -128,36 +128,37 @@ app.post("/todos/", async (request, response) => {
 
 //API 4 --PUT
 
-app.put("/todos/:todoId", async (request, response) => {
+app.put("/todos/:todoId/", async (request, response) => {
   const { todoId } = request.params;
-  let updateColumn = "";
+  let resultResponse = "";
+
   const requestBody = request.body;
+
   switch (true) {
     case requestBody.status !== undefined:
-      updateColumn = "Status";
+      resultResponse = "Status";
+
       break;
     case requestBody.priority !== undefined:
-      updateColumn = "Priority";
+      resultResponse = "Priority";
       break;
-    case requestBody.todo !== undefined:
-      updateColumn = "Todo";
+
+    default:
+      resultResponse = "Todo";
       break;
   }
 
-  const { todo, priority, status } = request.body;
+  const previousTodoQuery = `SELECT * FROM todo WHERE id = ${todoId};`; //Depending on the data in the request body, updateColumn will hold the name of the aspect being updated.
+  const previousTodo = await database.get(previousTodoQuery); //The code fetches the current data of the todo item from the database to have a reference for the update.
+  const {
+    todo = previousTodo.todo,
+    priority = previousTodo.priority,
+    status = previousTodo.status,
+  } = request.body; //The code extracts the updated values for the todo item from the request body. If a value isn't provided, it retains the previous value.
 
-  const updateQuery = `
-    UPDATE
-        todo
-    SET 
-        todo = '${todo}',
-        priority = '${priority}',
-        status = '${status}'
-    WHERE
-        id = ${todoId};        
-  `;
-  await database.run(updateQuery);
-  response.send(`${updateColumn} Updated`);
+  const updateTodoQuery = `UPDATE todo SET todo='${todo}', priority='${priority}', status='${status}' WHERE id = ${todoId};`;
+  await database.run(updateTodoQuery); //Using the extracted data, the code constructs an SQL query to update the todo item's information in the database.
+  response.send(`${resultResponse} Updated`); //Sending the required response.
 });
 
 //API 5

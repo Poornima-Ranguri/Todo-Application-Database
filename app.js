@@ -2,8 +2,10 @@ const express = require("express");
 const path = require("path");
 const { open } = require("sqlite");
 const sqlite3 = require("sqlite3");
+const cors = require("cors")
 
 const app = express();
+app.use(cors())
 
 app.use(express.json());
 
